@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"console.log\\(require\\('zod/package.json'\\).version\\)\")",
+      "Bash(npx eslint *)",
+      "Bash(grep -rn \"\\\\${\" lib app --include=\"*.ts\" --include=\"*.tsx\")",
+      "Bash(grep -rn \"WHERE \\\\${where}\\\\|\\\\${where}\\\\|\\\\${conditions\" lib app --include=\"*.ts\")",
+      "Bash(git -C /Users/admin/Desktop/HNG15/hngshoptask status --short)",
+      "Bash(git -C /Users/admin/Desktop/HNG15/hngshoptask check-ignore -v .env .env.local)",
+      "Bash(git -C /Users/admin/Desktop/HNG15/hngshoptask check-ignore .env.example)",
+      "Bash(python3 -)",
+      "Bash(git check-ignore *)"
+    ]
+  }
+}
