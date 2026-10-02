@@ -1,7 +1,7 @@
 /**
  * Creates (or updates) an admin user with an email/password login.
  *
- *   npx tsx --env-file=.env scripts/set-admin-password.ts admin@example.com 's3cret'
+ *   npx tsx --env-file=.env scripts/set-admin-password.ts <admin-email> '<password>'
  *
  * If the user exists (e.g. previously created via Google sign-in), their
  * password is set/updated and their role is promoted to admin.

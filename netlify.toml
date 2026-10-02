@@ -1,3 +1,9 @@
 [build.environment]
   # Turbopack's persistent build cache snapshots env values; it is never deployed.
   SECRETS_SCAN_OMIT_PATHS = ".netlify/.next/cache/**,.next/cache/**"
+
+  # These env vars hold PUBLIC configuration, not secrets — their values
+  # legitimately appear in source/docs (the brand name, Mailgun's public API
+  # base URL, and the admin email). Excluded so the scanner doesn't fail the
+  # build on them.
+  SECRETS_SCAN_OMIT_KEYS = "CLOUDINARY_FOLDER,MAILGUN_API_BASE,ADMIN_EMAILS"
