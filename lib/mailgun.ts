@@ -203,6 +203,59 @@ export async function sendOrderConfirmationEmail(params: {
 }
 
 /**
+ * Forward a support/contact form submission to the shop's support inbox.
+ * Returns true on success, false on any failure.
+ */
+export async function sendSupportEmail(params: {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}): Promise<boolean> {
+  if (!isConfigured()) {
+    console.warn("[mailgun] not configured — skipping support email");
+    return false;
+  }
+
+  const supportInbox = process.env.SUPPORT_EMAIL ?? FROM;
+
+  const body = new URLSearchParams({
+    from: FROM,
+    to: supportInbox,
+    "h:Reply-To": params.email,
+    subject: `[support] ${params.subject}`,
+    text: [
+      `From: ${params.name} <${params.email}>`,
+      "",
+      params.message,
+    ].join("\r\n"),
+  });
+
+  try {
+    const response = await fetch(`${API_BASE}/${DOMAIN}/messages`, {
+      method: "POST",
+      headers: {
+        Authorization:
+          "Basic " +
+          Buffer.from(`api:${process.env.MAILGUN_API_KEY}`).toString("base64"),
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: body.toString(),
+    });
+    if (!response.ok) {
+      console.error(
+        `[mailgun] support email failed: ${response.status} ${await response.text()}`
+      );
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("[mailgun] support email error:", error);
+    return false;
+  }
+}
+
+/**
  * Notify a customer that their order status changed.
  * Returns true on success, false on any failure — never blocks the update.
  */

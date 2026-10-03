@@ -28,6 +28,30 @@ export default async function Navbar() {
             Shop
           </Link>
 
+          <Link
+            href="/about"
+            className="link-underline hidden text-sm font-medium text-ink-soft hover:text-ink lg:inline"
+          >
+            About
+          </Link>
+
+          <Link
+            href="/support"
+            className="link-underline hidden text-sm font-medium text-ink-soft hover:text-ink lg:inline"
+          >
+            Support
+          </Link>
+
+          {user && (
+            <Link
+              href="/wishlist"
+              className="link-underline text-sm font-medium text-ink-soft hover:text-ink"
+              title="Wishlist"
+            >
+              ♡
+            </Link>
+          )}
+
           <CartBadge />
 
           {user && (
