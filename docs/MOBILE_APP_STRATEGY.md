@@ -1,7 +1,7 @@
-# Mobile App Strategy — Recommendations (No Code Changed)
+# Mobile App Strategy — Recommendations
 
 **Date:** 2026-10-03
-**Status:** Proposal only. Nothing in the codebase has been modified.
+**Status:** Phase 1 (API layer) and Phase 2 (mobile scaffold) are **implemented**. See "Implementation status" at the bottom.
 
 ---
 
@@ -106,3 +106,26 @@ If restructuring the existing repo is risky right now, start with `mobile/` in t
 - CORS configuration will be needed for any non-same-origin web client (native apps don't need CORS, but the policy should be explicit).
 - Decide monorepo vs subfolder before scaffolding mobile.
 - Blocked-user and admin rules must be enforced in the new API endpoints exactly as in the Server Actions, since mobile clients will hit them directly.
+
+---
+
+## 6. Implementation status (2026-10-03)
+
+### Phase 1 — API layer (done)
+
+- `lib/services/` — checkout, wishlist, reviews, support, and the Google user upsert extracted out of the Server Actions; the Server Actions in `app/actions/` are now thin wrappers (web behavior unchanged, `revalidatePath` kept in the wrappers).
+- `lib/api-auth.ts` — `getApiUser()` accepts the browser session cookie or an `Authorization: Bearer <authjs-jwt>` header; `issueApiSessionToken()` mints Auth.js-compatible JWTs for mobile.
+- `lib/rate-limit.ts` — in-memory fixed-window limiter applied to checkout, support, and the auth token exchange.
+- `app/api/v1/` route handlers: `products`, `products/[id]`, `products/[id]/reviews` (GET via detail, POST/DELETE), `orders` (list + checkout), `orders/[id]`, `wishlist` (GET/POST/DELETE), `support`, `auth/google` (token exchange), `auth/session`.
+- Web lint, `tsc --noEmit`, and `npm run build` all pass.
+
+### Phase 2 — mobile app (done, scaffold)
+
+- `mobile/` — Expo + React Native app: products list/search, product detail with reviews and wishlist, local cart, checkout (guest allowed), orders, Google sign-in via token exchange with the token in `expo-secure-store`.
+- Requires `npm install` in `mobile/` and env values in `mobile/.env.local` (see `mobile/README.md`).
+
+### Not yet done (future phases)
+
+- Admin endpoints for mobile (admin stays web-only for now).
+- Push notifications, deep links, payments webhook.
+- OpenAPI spec generation, shared Zod package extraction (schemas currently shared by convention, not by package).

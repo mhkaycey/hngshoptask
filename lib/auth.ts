@@ -5,20 +5,13 @@ import Credentials from "next-auth/providers/credentials";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { query } from "@/lib/db";
+import { upsertGoogleUser } from "@/lib/services/users";
 
 type DbUser = {
   id: string;
   role: "user" | "admin";
   is_blocked: boolean;
 };
-
-function isAdminEmail(email: string): boolean {
-  const admins = (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  return admins.includes(email.toLowerCase());
-}
 
 export const authConfig: NextAuthConfig = {
   session: { strategy: "jwt" },
@@ -64,55 +57,14 @@ export const authConfig: NextAuthConfig = {
       const email = user.email;
       if (!googleId || !email) return false;
 
-      const normalizedEmail = email.toLowerCase();
-
-      // Link by google_id OR email (email is unique) — never trust a raw
-      // upsert, and never crash if a row already exists with this email.
-      const { rows } = await query<DbUser>(
-        `SELECT id, role, is_blocked FROM users
-          WHERE google_id = $1 OR email = $2`,
-        [googleId, normalizedEmail]
-      );
-
-      if (rows.length === 0) {
-        await query(
-          `INSERT INTO users (google_id, email, name, avatar_url, role)
-           VALUES ($1, $2, $3, $4, $5)`,
-          [
-            googleId,
-            normalizedEmail,
-            user.name ?? normalizedEmail.split("@")[0],
-            user.image ?? null,
-            isAdminEmail(email) ? "admin" : "user",
-          ]
-        );
-        return true;
-      }
-
-      const dbUser = rows[0];
-      if (dbUser.is_blocked) return false;
-
-      await query(
-        `UPDATE users
-            SET google_id = $2, email = $3, name = $4, avatar_url = $5, updated_at = now()
-          WHERE id = $1`,
-        [
-          dbUser.id,
-          googleId,
-          normalizedEmail,
-          user.name ?? normalizedEmail.split("@")[0],
-          user.image ?? null,
-        ]
-      );
-
-      // Promote on every sign-in if the email is in ADMIN_EMAILS.
-      if (isAdminEmail(email) && dbUser.role !== "admin") {
-        await query(`UPDATE users SET role = 'admin', updated_at = now() WHERE id = $1`, [
-          dbUser.id,
-        ]);
-      }
-
-      return true;
+      // Shared upsert (also used by /api/v1/auth/google for the mobile app).
+      const result = await upsertGoogleUser({
+        googleId,
+        email,
+        name: user.name,
+        avatarUrl: user.image,
+      });
+      return result !== null;
     },
     async jwt({ token, user }) {
       // On initial sign-in, attach the internal users.id and role.

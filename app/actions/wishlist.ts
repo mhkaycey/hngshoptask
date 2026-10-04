@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
-import { query } from "@/lib/db";
-import { isUuid } from "@/lib/validations/ids";
+import {
+  addToWishlistCore,
+  removeFromWishlistCore,
+} from "@/lib/services/wishlist";
 
 export type WishlistResult =
   | { success: true; inWishlist: boolean }
@@ -20,25 +22,9 @@ export async function addToWishlist(productId: string): Promise<WishlistResult> 
       requiresAuth: true,
     };
   }
-  if (!isUuid(productId)) {
-    return { success: false, message: "Invalid product." };
-  }
-
-  try {
-    // Only active products can be saved; the insert is idempotent.
-    await query(
-      `INSERT INTO wishlist_items (user_id, product_id)
-       SELECT $1, id FROM products
-       WHERE id = $2 AND is_active = TRUE
-       ON CONFLICT (user_id, product_id) DO NOTHING`,
-      [userId, productId]
-    );
-    revalidatePath("/wishlist");
-    return { success: true, inWishlist: true };
-  } catch (error) {
-    console.error("[wishlist] add failed:", error);
-    return { success: false, message: "Could not save this product." };
-  }
+  const result = await addToWishlistCore(userId, productId);
+  if (result.success) revalidatePath("/wishlist");
+  return result;
 }
 
 /** Remove a product from the signed-in user's wishlist. */
@@ -54,22 +40,12 @@ export async function removeFromWishlist(
       requiresAuth: true,
     };
   }
-  if (!isUuid(productId)) {
-    return { success: false, message: "Invalid product." };
-  }
-
-  try {
-    await query(
-      `DELETE FROM wishlist_items WHERE user_id = $1 AND product_id = $2`,
-      [userId, productId]
-    );
+  const result = await removeFromWishlistCore(userId, productId);
+  if (result.success) {
     revalidatePath("/wishlist");
     revalidatePath(`/products/${productId}`);
-    return { success: true, inWishlist: false };
-  } catch (error) {
-    console.error("[wishlist] remove failed:", error);
-    return { success: false, message: "Could not remove this product." };
   }
+  return result;
 }
 
 /** Toggle wishlist membership for a product. */

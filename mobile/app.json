@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "hngshop",
+    "slug": "hngshop",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "hngshop",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.hngshop.app",
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "hngshop"
+            ]
+          }
+        ]
+      }
+    },
+    "android": {
+      "package": "com.hngshop.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#b45309"
+      }
+    },
+    "plugins": [
+      "expo-image",
+      "expo-secure-store",
+      "expo-status-bar",
+      "expo-web-browser"
+    ]
+  }
+}
